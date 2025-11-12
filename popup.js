@@ -3,7 +3,80 @@ document.addEventListener('DOMContentLoaded', () => {
   loadCustomImages();
   loadSelectedAnimation();
   setupEventListeners();
+  setupModalListeners();
 });
+
+// ===== API KEY MANAGEMENT =====
+
+async function getApiKey() {
+  const data = await chrome.storage.local.get('openaiApiKey');
+  return data.openaiApiKey || null;
+}
+
+async function saveApiKey(key) {
+  await chrome.storage.local.set({ openaiApiKey: key });
+}
+
+function validateApiKey(key) {
+  // Basic validation: OpenAI keys start with 'sk-' and have reasonable length
+  if (!key || typeof key !== 'string') {
+    return false;
+  }
+  const trimmedKey = key.trim();
+  return trimmedKey.startsWith('sk-') && trimmedKey.length > 20;
+}
+
+// ===== OPENAI API INTEGRATION =====
+
+async function generateImageWithOpenAI(prompt, apiKey) {
+  const response = await fetch('https://api.openai.com/v1/images/generations', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      model: 'gpt-image-1',
+      prompt: prompt,
+      size: '1024x1024',
+      quality: 'medium',
+      n: 1
+    })
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    console.error('OpenAI API Error:', errorData);
+    throw new Error(errorData.error?.message || `API request failed with status ${response.status}`);
+  }
+
+  const data = await response.json();
+  console.log('OpenAI API Response:', data);
+  
+  if (!data.data || !data.data[0]) {
+    console.error('Unexpected API response structure:', data);
+    throw new Error('Invalid response from OpenAI API: ' + JSON.stringify(data).substring(0, 200));
+  }
+
+  // Handle both URL and base64 formats
+  const imageData = data.data[0];
+  if (imageData.url) {
+    return imageData.url;
+  } else if (imageData.b64_json) {
+    // Convert base64 to data URL
+    return `data:image/png;base64,${imageData.b64_json}`;
+  } else {
+    throw new Error('No image URL or base64 data in response');
+  }
+}
+
+async function downloadImageAsBlob(url) {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error('Failed to download generated image');
+  }
+  return await response.blob();
+}
 
 function setupEventListeners() {
   // Menu toggle handlers
@@ -188,7 +261,7 @@ async function deleteCustomImage(imageId) {
 
 // Handle add custom image button click
 function handleAddCustomImage() {
-  document.getElementById('fileInput').click();
+  openModal();
 }
 
 // Handle clear custom images button click
@@ -804,4 +877,211 @@ function showImageOverlay(src, animationType = 'burst') {
       setTimeout(() => particle.remove(), duration);
     }
   }
+}
+
+// ===== MODAL INTERACTION LOGIC =====
+
+function setupModalListeners() {
+  // Option selection
+  document.getElementById('uploadOption').addEventListener('click', () => {
+    closeModal();
+    document.getElementById('fileInput').click();
+  });
+
+  document.getElementById('aiOption').addEventListener('click', handleAIOptionClick);
+
+  // Modal close
+  document.getElementById('modalClose').addEventListener('click', closeModal);
+
+  // API Key navigation
+  document.getElementById('apiKeyBack').addEventListener('click', showModalStep1);
+  document.getElementById('apiKeySubmit').addEventListener('click', handleApiKeySubmit);
+
+  // Prompt navigation
+  document.getElementById('promptBack').addEventListener('click', async () => {
+    const apiKey = await getApiKey();
+    if (apiKey) {
+      showModalStep1();
+    } else {
+      showModalStep2();
+    }
+  });
+  document.getElementById('generateBtn').addEventListener('click', handleGenerateEmoji);
+
+  // Allow Enter key to submit
+  document.getElementById('apiKeyField').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      handleApiKeySubmit();
+    }
+  });
+
+  document.getElementById('promptField').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter' && e.ctrlKey) {
+      handleGenerateEmoji();
+    }
+  });
+
+  // Close modal on overlay click
+  document.getElementById('aiModal').addEventListener('click', (e) => {
+    if (e.target.id === 'aiModal') {
+      closeModal();
+    }
+  });
+}
+
+function openModal() {
+  document.getElementById('aiModal').style.display = 'flex';
+  showModalStep1();
+}
+
+function closeModal() {
+  document.getElementById('aiModal').style.display = 'none';
+  clearModalMessage();
+  // Clear inputs
+  document.getElementById('apiKeyField').value = '';
+  document.getElementById('promptField').value = '';
+}
+
+function showModalStep1() {
+  hideAllModalSteps();
+  document.getElementById('optionSelect').style.display = 'block';
+  clearModalMessage();
+}
+
+function showModalStep2() {
+  hideAllModalSteps();
+  document.getElementById('apiKeyInput').style.display = 'block';
+  document.getElementById('apiKeyField').focus();
+  clearModalMessage();
+}
+
+function showModalStep3() {
+  hideAllModalSteps();
+  document.getElementById('promptInput').style.display = 'block';
+  document.getElementById('promptField').focus();
+  clearModalMessage();
+}
+
+function showLoadingState() {
+  hideAllModalSteps();
+  document.getElementById('loadingState').style.display = 'block';
+}
+
+function hideAllModalSteps() {
+  document.getElementById('optionSelect').style.display = 'none';
+  document.getElementById('apiKeyInput').style.display = 'none';
+  document.getElementById('promptInput').style.display = 'none';
+  document.getElementById('loadingState').style.display = 'none';
+}
+
+async function handleAIOptionClick() {
+  const apiKey = await getApiKey();
+  if (apiKey && validateApiKey(apiKey)) {
+    showModalStep3();
+  } else {
+    showModalStep2();
+  }
+}
+
+async function handleApiKeySubmit() {
+  const apiKeyField = document.getElementById('apiKeyField');
+  const apiKey = apiKeyField.value.trim();
+
+  if (!validateApiKey(apiKey)) {
+    showModalError('Please enter a valid OpenAI API key (starts with sk-)');
+    return;
+  }
+
+  await saveApiKey(apiKey);
+  showModalStep3();
+}
+
+async function handleGenerateEmoji() {
+  const promptField = document.getElementById('promptField');
+  const prompt = promptField.value.trim();
+
+  if (!prompt) {
+    showModalError('Please describe the emoji you want to generate');
+    return;
+  }
+
+  const generateBtn = document.getElementById('generateBtn');
+  generateBtn.disabled = true;
+
+  try {
+    showLoadingState();
+
+    const apiKey = await getApiKey();
+    if (!apiKey) {
+      throw new Error('No API key found');
+    }
+
+    // Generate image
+    const imageUrl = await generateImageWithOpenAI(prompt, apiKey);
+
+    // Download as blob
+    const blob = await downloadImageAsBlob(imageUrl);
+
+    // Save to IndexedDB
+    const imageId = `ai_generated_${Date.now()}`;
+    await saveCustomImage(blob, imageId);
+
+    // Refresh display
+    await loadCustomImages();
+
+    // Close modal and show success
+    closeModal();
+    console.log('AI emoji generated successfully:', imageId);
+
+  } catch (error) {
+    console.error('Error generating emoji:', error);
+    showModalStep3();
+    showModalError(getErrorMessage(error));
+  } finally {
+    generateBtn.disabled = false;
+  }
+}
+
+function showModalError(message) {
+  const messageDiv = document.getElementById('modalMessage');
+  messageDiv.textContent = message;
+  messageDiv.className = 'modal-message error';
+}
+
+function showModalSuccess(message) {
+  const messageDiv = document.getElementById('modalMessage');
+  messageDiv.textContent = message;
+  messageDiv.className = 'modal-message success';
+}
+
+function clearModalMessage() {
+  const messageDiv = document.getElementById('modalMessage');
+  messageDiv.textContent = '';
+  messageDiv.className = 'modal-message';
+}
+
+function getErrorMessage(error) {
+  const message = error.message || 'Unknown error';
+  
+  if (message.includes('401') || message.includes('authentication')) {
+    return 'Invalid API key. Please check your OpenAI API key and try again.';
+  }
+  
+  if (message.includes('429') || message.includes('rate limit')) {
+    return 'Rate limit exceeded. Please wait a moment and try again.';
+  }
+  
+  if (message.includes('quota')) {
+    return 'API quota exceeded. Please check your OpenAI account.';
+  }
+  
+  if (message.includes('content_policy')) {
+    return 'Your prompt was flagged by content policy. Please try a different description.';
+  }
+  
+  if (message.includes('network') || message.includes('fetch')) {
+    return 'Network error. Please check your connection and try again.';
+  }
+  
+  return `Error: ${message}`;
 }

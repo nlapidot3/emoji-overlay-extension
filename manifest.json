@@ -4,6 +4,7 @@
   "version": "1.0",
   "description": "Temporarily display an emoji overlay on your current page.",
   "permissions": ["activeTab", "scripting", "storage"],
+  "host_permissions": ["https://api.openai.com/*"],
   "action": {
     "default_popup": "popup.html"
   },

@@ -189,6 +189,212 @@
       background: #ff4444;
       color: white;
     }
+    
+    /* Modal Styles */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    
+    .modal-content {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    }
+    
+    .modal-step h3 {
+      margin: 0 0 16px 0;
+      font-size: 18px;
+      font-weight: 600;
+      text-align: center;
+    }
+    
+    .option-cards {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    
+    .option-card {
+      flex: 1;
+      padding: 20px 16px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .option-card:hover {
+      border-color: #4CAF50;
+      background: #f9fff9;
+      transform: translateY(-2px);
+    }
+    
+    .option-icon {
+      font-size: 32px;
+      margin-bottom: 8px;
+    }
+    
+    .option-title {
+      font-weight: 600;
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+    
+    .option-desc {
+      font-size: 12px;
+      color: #666;
+    }
+    
+    .modal-info {
+      font-size: 12px;
+      color: #666;
+      background: #f5f5f5;
+      padding: 12px;
+      border-radius: 6px;
+      margin-bottom: 16px;
+      line-height: 1.4;
+    }
+    
+    .modal-step input[type="password"],
+    .modal-step textarea {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 14px;
+      box-sizing: border-box;
+      margin-bottom: 16px;
+      transition: border-color 0.2s;
+    }
+    
+    .modal-step input[type="password"]:focus,
+    .modal-step textarea:focus {
+      outline: none;
+      border-color: #4CAF50;
+    }
+    
+    .modal-step textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+    
+    .modal-buttons {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+    
+    .btn-primary,
+    .btn-secondary {
+      padding: 10px 20px;
+      border-radius: 6px;
+      border: none;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .btn-primary {
+      background: #4CAF50;
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background: #45a049;
+    }
+    
+    .btn-primary:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    
+    .btn-secondary {
+      background: #f5f5f5;
+      color: #333;
+    }
+    
+    .btn-secondary:hover {
+      background: #e0e0e0;
+    }
+    
+    .modal-close {
+      width: 100%;
+      padding: 10px;
+      background: #f5f5f5;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: background 0.2s;
+    }
+    
+    .modal-close:hover {
+      background: #e0e0e0;
+    }
+    
+    .loading-spinner {
+      width: 48px;
+      height: 48px;
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #4CAF50;
+      border-radius: 50%;
+      margin: 0 auto 16px auto;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    #loadingState {
+      text-align: center;
+      padding: 20px;
+    }
+    
+    #loadingState p {
+      margin: 0;
+      color: #666;
+    }
+    
+    .modal-message {
+      padding: 10px;
+      border-radius: 6px;
+      margin-bottom: 12px;
+      font-size: 13px;
+      display: none;
+    }
+    
+    .modal-message.error {
+      background: #ffebee;
+      color: #c62828;
+      border: 1px solid #ef5350;
+      display: block;
+    }
+    
+    .modal-message.success {
+      background: #e8f5e9;
+      color: #2e7d32;
+      border: 1px solid #66bb6a;
+      display: block;
+    }
   </style>
 </head>
 <body>
@@ -273,6 +479,57 @@
   
   <!-- Hidden file input -->
   <input type="file" id="fileInput" accept=".png,.gif,image/png,image/gif" />
+
+  <!-- AI Generation Modal -->
+  <div id="aiModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+      <!-- Step 1: Choose option -->
+      <div id="optionSelect" class="modal-step">
+        <h3>Add Custom Emoji</h3>
+        <div class="option-cards">
+          <div class="option-card" id="uploadOption">
+            <div class="option-icon">📁</div>
+            <div class="option-title">Upload from Computer</div>
+            <div class="option-desc">Select a PNG or GIF file</div>
+          </div>
+          <div class="option-card" id="aiOption">
+            <div class="option-icon">🎨</div>
+            <div class="option-title">Sam Altman's Drawings</div>
+            <div class="option-desc">Generate with AI</div>
+          </div>
+        </div>
+        <button class="modal-close" id="modalClose">Cancel</button>
+      </div>
+
+      <!-- Step 2: API Key Input -->
+      <div id="apiKeyInput" class="modal-step" style="display: none;">
+        <h3>Enter OpenAI API Key</h3>
+        <p class="modal-info">Your API key is stored locally on your machine and never leaves your browser.</p>
+        <input type="password" id="apiKeyField" placeholder="sk-..." />
+        <div class="modal-buttons">
+          <button class="btn-secondary" id="apiKeyBack">Back</button>
+          <button class="btn-primary" id="apiKeySubmit">Continue</button>
+        </div>
+      </div>
+
+      <!-- Step 3: Prompt Input -->
+      <div id="promptInput" class="modal-step" style="display: none;">
+        <h3>Describe Your Emoji</h3>
+        <textarea id="promptField" placeholder="e.g., a smiling avocado wearing sunglasses" rows="4"></textarea>
+        <div id="modalMessage" class="modal-message"></div>
+        <div class="modal-buttons">
+          <button class="btn-secondary" id="promptBack">Back</button>
+          <button class="btn-primary" id="generateBtn">Generate</button>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div id="loadingState" class="modal-step" style="display: none;">
+        <div class="loading-spinner"></div>
+        <p>Generating your emoji...</p>
+      </div>
+    </div>
+  </div>
 
   <script src="db.js"></script>
   <script src="popup.js"></script>
