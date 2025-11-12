@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Emoji Overlay</title>
+  <style>
+    body {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 10px;
+      width: 220px;
+      font-size: 24px;
+    }
+    button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+    }
+    img {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+    }
+    #addCustomBtn {
+      width: 36px;
+      height: 36px;
+      font-size: 24px;
+      border: 2px dashed #ccc;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f5f5f5;
+      transition: all 0.2s;
+    }
+    #addCustomBtn:hover {
+      background: #e0e0e0;
+      border-color: #999;
+    }
+    .custom-image-wrapper {
+      position: relative;
+      display: inline-block;
+    }
+    .delete-btn {
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      width: 18px;
+      height: 18px;
+      background: #ff4444;
+      color: white;
+      border-radius: 50%;
+      font-size: 12px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      line-height: 1;
+      padding: 0;
+      border: 2px solid white;
+    }
+    .custom-image-wrapper:hover .delete-btn {
+      display: flex;
+    }
+    #fileInput {
+      display: none;
+    }
+    #clearBtn {
+      width: 36px;
+      height: 36px;
+      font-size: 16px;
+      border: 2px solid #ff4444;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #ffe0e0;
+      transition: all 0.2s;
+      color: #ff4444;
+      font-weight: bold;
+    }
+    #clearBtn:hover {
+      background: #ff4444;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <!-- Regular emojis -->
+  <button data-type="emoji" data-value="😎">😎</button>
+  <button data-type="emoji" data-value="🔥">🔥</button>
+  <button data-type="emoji" data-value="❤️">❤️</button>
+
+  <!-- Custom emoji images -->
+  <button data-type="image" data-src="emojis/heart.png">
+    <img src="emojis/heart.png" alt="heart" />
+  </button>
+  <button data-type="image" data-src="emojis/party.png">
+    <img src="emojis/party.png" alt="party" />
+  </button>
+  <button data-type="image" data-src="emojis/fire.png">
+    <img src="emojis/fire.png" alt="fire" />
+  </button>
+  <button data-type="image" data-src="emojis/letsgo.png">
+    <img src="emojis/letsgo.png" alt="let's go" />
+  </button>
+  <button data-type="image" data-src="emojis/rocket.png">
+    <img src="emojis/rocket.png" alt="rocket" />
+  </button>
+  <button data-type="image" data-src="emojis/thumbsup.png">
+    <img src="emojis/thumbsup.png" alt="thumbs up" />
+  </button>
+  <button data-type="image" data-src="emojis/cookin.png">
+    <img src="emojis/cookin.png" alt="cookin" />
+  </button>
+  <button data-type="image" data-src="emojis/money.png">
+    <img src="emojis/money.png" alt="money" />
+  </button>
+  <button data-type="image" data-src="emojis/clap.png">
+    <img src="emojis/clap.png" alt="clap" />
+  </button>
+
+  <!-- Add custom image button -->
+  <button id="addCustomBtn" title="Add custom emoji">+</button>
+  
+  <!-- Clear custom images button -->
+  <button id="clearBtn" title="Clear all custom emojis">×</button>
+  
+  <!-- Hidden file input -->
+  <input type="file" id="fileInput" accept=".png,image/png" />
+  
+  <!-- Custom images will be inserted here dynamically -->
+  <div id="customImagesContainer"></div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

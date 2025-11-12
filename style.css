@@ -1,0 +1,11 @@
+.emoji-overlay {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 10rem;
+  opacity: 0.8;
+  pointer-events: none;
+  z-index: 999999;
+}
+
