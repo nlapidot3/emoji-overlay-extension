@@ -420,19 +420,20 @@ window.addEventListener('unload', () => {
 });
 
 function showEmojiOverlay(emoji, animationType = 'burst') {
-  if (animationType === 'rain') {
-    // Rain animation
+  if (animationType === 'drift') {
+    // Drift animation
     const waveCount = 4;
     const particlesPerWave = 7;
     const waveInterval = 300;
     const duration = 3500;
     
-    function animateRainParticle(particle, startX, duration) {
+    function animateDriftParticle(particle, startX, duration) {
       const startTime = Date.now();
       const gravity = 500;
       const startY = -100;
       const driftAmplitude = 30;
       const driftFrequency = 2;
+      const baseTilt = (Math.random() - 0.5) * 40;
       
       function animate() {
         const elapsed = (Date.now() - startTime) / 1000;
@@ -443,7 +444,7 @@ function showEmojiOverlay(emoji, animationType = 'burst') {
         const y = startY + 0.5 * gravity * elapsed * elapsed;
         const drift = Math.sin(elapsed * driftFrequency * Math.PI) * driftAmplitude;
         const x = startX + drift;
-        const rotation = elapsed * 180;
+        const tilt = baseTilt + (drift / driftAmplitude) * 15;
         
         const screenHeight = window.innerHeight;
         const fadeStart = screenHeight * 0.8;
@@ -451,7 +452,7 @@ function showEmojiOverlay(emoji, animationType = 'burst') {
         
         particle.style.left = x + "px";
         particle.style.top = y + "px";
-        particle.style.transform = `translate(-50%, -50%) rotate(${rotation}deg)`;
+        particle.style.transform = `translate(-50%, -50%) rotate(${tilt}deg)`;
         particle.style.opacity = Math.max(0, opacity);
         
         requestAnimationFrame(animate);
@@ -482,7 +483,7 @@ function showEmojiOverlay(emoji, animationType = 'burst') {
           });
           
           document.body.appendChild(particle);
-          animateRainParticle(particle, startX, duration);
+          animateDriftParticle(particle, startX, duration);
           setTimeout(() => particle.remove(), duration);
         }
       }, wave * waveInterval);
@@ -646,19 +647,20 @@ function createBurstAnimation(content, isEmoji) {
   }
 }
 
-function createRainAnimation(content, isEmoji) {
+function createDriftAnimation(content, isEmoji) {
   const waveCount = 4; // Number of waves
   const particlesPerWave = 7; // Particles in each wave
   const waveInterval = 300; // ms between waves
   const duration = 3500; // Total animation duration in ms
   
   // Helper function to animate falling particles
-  function animateRainParticle(particle, startX, duration) {
+  function animateDriftParticle(particle, startX, duration) {
     const startTime = Date.now();
     const gravity = 500; // pixels per second squared
     const startY = -100; // Start above viewport
     const driftAmplitude = 30; // Horizontal drift amount
     const driftFrequency = 2; // Drift oscillation speed
+    const baseTilt = (Math.random() - 0.5) * 40;
     
     function animate() {
       const elapsed = (Date.now() - startTime) / 1000; // seconds
@@ -673,8 +675,8 @@ function createRainAnimation(content, isEmoji) {
       const drift = Math.sin(elapsed * driftFrequency * Math.PI) * driftAmplitude;
       const x = startX + drift;
       
-      // Calculate rotation (slower than burst)
-      const rotation = elapsed * 180; // degrees
+      // Calculate tilt based on drift
+      const tilt = baseTilt + (drift / driftAmplitude) * 15;
       
       // Fade out near bottom of screen
       const screenHeight = window.innerHeight;
@@ -684,7 +686,7 @@ function createRainAnimation(content, isEmoji) {
       // Apply transformations
       particle.style.left = x + "px";
       particle.style.top = y + "px";
-      particle.style.transform = `translate(-50%, -50%) rotate(${rotation}deg)`;
+      particle.style.transform = `translate(-50%, -50%) rotate(${tilt}deg)`;
       particle.style.opacity = Math.max(0, opacity);
       
       requestAnimationFrame(animate);
@@ -735,7 +737,7 @@ function createRainAnimation(content, isEmoji) {
         document.body.appendChild(particle);
         
         // Animate the particle
-        animateRainParticle(particle, startX, duration);
+        animateDriftParticle(particle, startX, duration);
         
         // Remove after animation
         setTimeout(() => particle.remove(), duration);
@@ -745,19 +747,20 @@ function createRainAnimation(content, isEmoji) {
 }
 
 function showImageOverlay(src, animationType = 'burst') {
-  if (animationType === 'rain') {
-    // Rain animation for images
+  if (animationType === 'drift') {
+    // Drift animation for images
     const waveCount = 4;
     const particlesPerWave = 7;
     const waveInterval = 300;
     const duration = 3500;
     
-    function animateRainParticle(particle, startX, duration) {
+    function animateDriftParticle(particle, startX, duration) {
       const startTime = Date.now();
       const gravity = 500;
       const startY = -100;
       const driftAmplitude = 30;
       const driftFrequency = 2;
+      const baseTilt = (Math.random() - 0.5) * 40;
       
       function animate() {
         const elapsed = (Date.now() - startTime) / 1000;
@@ -768,7 +771,7 @@ function showImageOverlay(src, animationType = 'burst') {
         const y = startY + 0.5 * gravity * elapsed * elapsed;
         const drift = Math.sin(elapsed * driftFrequency * Math.PI) * driftAmplitude;
         const x = startX + drift;
-        const rotation = elapsed * 180;
+        const tilt = baseTilt + (drift / driftAmplitude) * 15;
         
         const screenHeight = window.innerHeight;
         const fadeStart = screenHeight * 0.8;
@@ -776,7 +779,7 @@ function showImageOverlay(src, animationType = 'burst') {
         
         particle.style.left = x + "px";
         particle.style.top = y + "px";
-        particle.style.transform = `translate(-50%, -50%) rotate(${rotation}deg)`;
+        particle.style.transform = `translate(-50%, -50%) rotate(${tilt}deg)`;
         particle.style.opacity = Math.max(0, opacity);
         
         requestAnimationFrame(animate);
@@ -808,7 +811,7 @@ function showImageOverlay(src, animationType = 'burst') {
           });
           
           document.body.appendChild(particle);
-          animateRainParticle(particle, startX, duration);
+          animateDriftParticle(particle, startX, duration);
           setTimeout(() => particle.remove(), duration);
         }
       }, wave * waveInterval);
