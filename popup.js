@@ -420,14 +420,294 @@ window.addEventListener('unload', () => {
 });
 
 function showEmojiOverlay(emoji, animationType = 'burst') {
-  if (animationType === 'drift') {
-    // Drift animation
+  if (animationType === 'boring' || animationType === 'boring-giant') {
+    // Boring animation - single emoji centered
+    const particle = document.createElement("div");
+    particle.textContent = emoji;
+    
+    const centerX = window.innerWidth / 2;
+    const centerY = window.innerHeight / 2;
+    const duration = 2500;
+    const size = animationType === 'boring-giant' ? 30 : 10;
+    
+    Object.assign(particle.style, {
+      position: "fixed",
+      left: centerX + "px",
+      top: centerY + "px",
+      fontSize: size + "rem",
+      opacity: "1",
+      pointerEvents: "none",
+      zIndex: "999999",
+      transform: "translate(-50%, -50%)",
+      transition: "none"
+    });
+    
+    document.body.appendChild(particle);
+    
+    const startTime = Date.now();
+    
+    function animate() {
+      const elapsed = (Date.now() - startTime) / 1000;
+      const progress = elapsed / (duration / 1000);
+      
+      if (progress >= 1) return;
+      
+      const opacity = progress > 0.7 ? (1 - (progress - 0.7) / 0.3) : 1;
+      particle.style.opacity = opacity;
+      
+      requestAnimationFrame(animate);
+    }
+    
+    requestAnimationFrame(animate);
+    setTimeout(() => particle.remove(), duration);
+    
+  } else if (animationType === 'drive') {
+    // Drive animation - left to right
+    const particleCount = 25;
+    const duration = 3000;
+    
+    for (let i = 0; i < particleCount; i++) {
+      const particle = document.createElement("div");
+      particle.textContent = emoji;
+      
+      const startX = -150;
+      const startY = Math.random() * window.innerHeight;
+      const velocity = 300 + Math.random() * 400;
+      const rotationSpeed = (Math.random() - 0.5) * 360;
+      const size = 3 + Math.random() * 4;
+      
+      Object.assign(particle.style, {
+        position: "fixed",
+        left: startX + "px",
+        top: startY + "px",
+        fontSize: size + "rem",
+        opacity: "1",
+        pointerEvents: "none",
+        zIndex: "999999",
+        transform: "translate(-50%, -50%)",
+        transition: "none"
+      });
+      
+      document.body.appendChild(particle);
+      
+      const startTime = Date.now();
+      
+      function animate() {
+        const elapsed = (Date.now() - startTime) / 1000;
+        const progress = elapsed / (duration / 1000);
+        
+        if (progress >= 1) return;
+        
+        const x = startX + velocity * elapsed;
+        const rotation = rotationSpeed * elapsed;
+        
+        const screenWidth = window.innerWidth;
+        const fadeStart = screenWidth * 0.8;
+        const opacity = x > fadeStart ? 1 - ((x - fadeStart) / (screenWidth * 0.2)) : 1;
+        
+        particle.style.left = x + "px";
+        particle.style.transform = `translate(-50%, -50%) rotate(${rotation}deg)`;
+        particle.style.opacity = Math.max(0, opacity);
+        
+        requestAnimationFrame(animate);
+      }
+      
+      requestAnimationFrame(animate);
+      setTimeout(() => particle.remove(), duration);
+    }
+    
+  } else if (animationType === 'reverse') {
+    // Reverse animation - right to left
+    const particleCount = 25;
+    const duration = 3000;
+    
+    for (let i = 0; i < particleCount; i++) {
+      const particle = document.createElement("div");
+      particle.textContent = emoji;
+      
+      const startX = window.innerWidth + 150;
+      const startY = Math.random() * window.innerHeight;
+      const velocity = -(300 + Math.random() * 400);
+      const rotationSpeed = (Math.random() - 0.5) * 360;
+      const size = 3 + Math.random() * 4;
+      
+      Object.assign(particle.style, {
+        position: "fixed",
+        left: startX + "px",
+        top: startY + "px",
+        fontSize: size + "rem",
+        opacity: "1",
+        pointerEvents: "none",
+        zIndex: "999999",
+        transform: "translate(-50%, -50%)",
+        transition: "none"
+      });
+      
+      document.body.appendChild(particle);
+      
+      const startTime = Date.now();
+      
+      function animate() {
+        const elapsed = (Date.now() - startTime) / 1000;
+        const progress = elapsed / (duration / 1000);
+        
+        if (progress >= 1) return;
+        
+        const x = startX + velocity * elapsed;
+        const rotation = rotationSpeed * elapsed;
+        
+        const fadeStart = window.innerWidth * 0.2;
+        const opacity = x < fadeStart ? 1 - ((fadeStart - x) / (window.innerWidth * 0.2)) : 1;
+        
+        particle.style.left = x + "px";
+        particle.style.transform = `translate(-50%, -50%) rotate(${rotation}deg)`;
+        particle.style.opacity = Math.max(0, opacity);
+        
+        requestAnimationFrame(animate);
+      }
+      
+      requestAnimationFrame(animate);
+      setTimeout(() => particle.remove(), duration);
+    }
+    
+  } else if (animationType === 'tornado') {
+    // Tornado animation - spiral cyclone
+    const particleCount = 25;
+    const duration = 4000;
+    const centerX = window.innerWidth / 2;
+    const centerY = window.innerHeight / 2;
+    
+    for (let i = 0; i < particleCount; i++) {
+      const particle = document.createElement("div");
+      particle.textContent = emoji;
+      
+      const startAngle = (i / particleCount) * Math.PI * 2;
+      const size = 3 + Math.random() * 4;
+      
+      Object.assign(particle.style, {
+        position: "fixed",
+        left: centerX + "px",
+        top: centerY + "px",
+        fontSize: size + "rem",
+        opacity: "1",
+        pointerEvents: "none",
+        zIndex: "999999",
+        transform: "translate(-50%, -50%)",
+        transition: "none"
+      });
+      
+      document.body.appendChild(particle);
+      
+      const startTime = Date.now();
+      
+      function animate() {
+        const elapsed = (Date.now() - startTime) / 1000;
+        const progress = elapsed / (duration / 1000);
+        
+        if (progress >= 1) return;
+        
+        const angle = startAngle + elapsed * 3 * Math.PI;
+        const radius = progress * 300;
+        
+        const x = centerX + Math.cos(angle) * radius;
+        const y = centerY + Math.sin(angle) * radius;
+        const rotation = elapsed * 360;
+        const opacity = 1 - progress * 0.8;
+        
+        particle.style.left = x + "px";
+        particle.style.top = y + "px";
+        particle.style.transform = `translate(-50%, -50%) rotate(${rotation}deg)`;
+        particle.style.opacity = Math.max(0, opacity);
+        
+        requestAnimationFrame(animate);
+      }
+      
+      requestAnimationFrame(animate);
+      setTimeout(() => particle.remove(), duration);
+    }
+    
+  } else if (animationType === 'wave') {
+    // Wave animation - ocean wave
+    const particleCount = 25;
+    const duration = 4000;
+    const waveHeight = window.innerHeight * 0.3;
+    const baseY = window.innerHeight / 2;
+    
+    for (let i = 0; i < particleCount; i++) {
+      const particle = document.createElement("div");
+      particle.textContent = emoji;
+      
+      const delay = (i / particleCount) * 1000;
+      const size = 3 + Math.random() * 3;
+      const verticalOffset = (Math.random() - 0.5) * 100;
+      
+      Object.assign(particle.style, {
+        position: "fixed",
+        left: "-100px",
+        top: baseY + "px",
+        fontSize: size + "rem",
+        opacity: "0",
+        pointerEvents: "none",
+        zIndex: "999999",
+        transform: "translate(-50%, -50%)",
+        transition: "none"
+      });
+      
+      document.body.appendChild(particle);
+      
+      setTimeout(() => {
+        const startTime = Date.now();
+        
+        function animate() {
+          const elapsed = (Date.now() - startTime) / 1000;
+          const progress = elapsed / (duration / 1000);
+          
+          if (progress >= 1) return;
+          
+          const x = -100 + progress * (window.innerWidth + 200);
+          const waveProgress = (x + 100) / window.innerWidth;
+          let waveY;
+          
+          if (waveProgress < 0.3) {
+            waveY = Math.sin(waveProgress * Math.PI * 5) * waveHeight * (waveProgress / 0.3);
+          } else if (waveProgress < 0.7) {
+            waveY = Math.sin(waveProgress * Math.PI * 3) * waveHeight;
+          } else {
+            waveY = Math.sin(waveProgress * Math.PI * 5) * waveHeight * (1 - (waveProgress - 0.7) / 0.3);
+          }
+          
+          const y = baseY + waveY + verticalOffset;
+          const rotation = Math.sin(waveProgress * Math.PI * 3) * 30;
+          
+          let opacity = 1;
+          if (progress < 0.1) {
+            opacity = progress / 0.1;
+          } else if (progress > 0.9) {
+            opacity = 1 - ((progress - 0.9) / 0.1);
+          }
+          
+          particle.style.left = x + "px";
+          particle.style.top = y + "px";
+          particle.style.transform = `translate(-50%, -50%) rotate(${rotation}deg)`;
+          particle.style.opacity = opacity;
+          
+          requestAnimationFrame(animate);
+        }
+        
+        requestAnimationFrame(animate);
+      }, delay);
+      
+      setTimeout(() => particle.remove(), duration + delay);
+    }
+    
+  } else if (animationType === 'rain') {
+    // Rain animation
     const waveCount = 4;
     const particlesPerWave = 7;
     const waveInterval = 300;
     const duration = 3500;
     
-    function animateDriftParticle(particle, startX, duration) {
+    function animateRainParticle(particle, startX, duration) {
       const startTime = Date.now();
       const gravity = 500;
       const startY = -100;
@@ -483,13 +763,14 @@ function showEmojiOverlay(emoji, animationType = 'burst') {
           });
           
           document.body.appendChild(particle);
-          animateDriftParticle(particle, startX, duration);
+          animateRainParticle(particle, startX, duration);
           setTimeout(() => particle.remove(), duration);
         }
       }, wave * waveInterval);
     }
+    
   } else {
-    // Burst animation
+    // Burst animation (default)
     function animateParticle(particle, velocityX, velocityY, rotationSpeed, duration) {
       const startTime = Date.now();
       const gravity = 500;
@@ -746,15 +1027,690 @@ function createDriftAnimation(content, isEmoji) {
   }
 }
 
+function createBoringAnimation(content, isEmoji, isGiant = false) {
+  const particle = isEmoji ? document.createElement("div") : document.createElement("img");
+  
+  if (isEmoji) {
+    particle.textContent = content;
+  } else {
+    particle.src = content;
+  }
+  
+  const centerX = window.innerWidth / 2;
+  const centerY = window.innerHeight / 2;
+  const duration = 2500; // Animation duration in ms
+  const size = isGiant ? 30 : 10; // Giant is 3x normal size
+  
+  // Initial styles
+  const baseStyles = {
+    position: "fixed",
+    left: centerX + "px",
+    top: centerY + "px",
+    opacity: "1",
+    pointerEvents: "none",
+    zIndex: "999999",
+    transform: "translate(-50%, -50%)",
+    transition: "none"
+  };
+  
+  if (isEmoji) {
+    baseStyles.fontSize = size + "rem";
+  } else {
+    baseStyles.width = (size * 20) + "px"; // Convert rem-like size to pixels for images
+    baseStyles.height = (size * 20) + "px";
+  }
+  
+  Object.assign(particle.style, baseStyles);
+  document.body.appendChild(particle);
+  
+  // Animate fade out
+      const startTime = Date.now();
+      
+      function animate() {
+        const elapsed = (Date.now() - startTime) / 1000;
+        const progress = elapsed / (duration / 1000);
+        
+        if (progress >= 1) return;
+        
+    // Fade out in the last 30% of animation
+    const opacity = progress > 0.7 ? (1 - (progress - 0.7) / 0.3) : 1;
+    particle.style.opacity = opacity;
+        
+        requestAnimationFrame(animate);
+      }
+      
+      requestAnimationFrame(animate);
+  setTimeout(() => particle.remove(), duration);
+}
+
+function createDriveAnimation(content, isEmoji) {
+  const particleCount = 25;
+  const duration = 3000; // Animation duration in ms
+  
+  for (let i = 0; i < particleCount; i++) {
+    const particle = isEmoji ? document.createElement("div") : document.createElement("img");
+    
+    if (isEmoji) {
+      particle.textContent = content;
+    } else {
+      particle.src = content;
+    }
+    
+    // Random starting position on the left side, off-screen
+    const startX = -150;
+    const startY = Math.random() * window.innerHeight;
+    
+    // Random velocity (how fast they move right)
+    const velocity = 300 + Math.random() * 400; // pixels per second
+    
+    // Random size variation
+    const size = isEmoji ? (3 + Math.random() * 4) : (60 + Math.random() * 80);
+    
+    // Random rotation speed
+    const rotationSpeed = (Math.random() - 0.5) * 360;
+    
+    // Initial styles
+    const baseStyles = {
+            position: "fixed",
+            left: startX + "px",
+      top: startY + "px",
+            opacity: "1",
+            pointerEvents: "none",
+            zIndex: "999999",
+            transform: "translate(-50%, -50%)",
+            transition: "none"
+    };
+    
+    if (isEmoji) {
+      baseStyles.fontSize = size + "rem";
+    } else {
+      baseStyles.width = size + "px";
+      baseStyles.height = size + "px";
+    }
+    
+    Object.assign(particle.style, baseStyles);
+          document.body.appendChild(particle);
+    
+    // Animate particle moving left to right
+    const startTime = Date.now();
+    
+    function animate() {
+      const elapsed = (Date.now() - startTime) / 1000;
+      const progress = elapsed / (duration / 1000);
+      
+      if (progress >= 1) return;
+      
+      const x = startX + velocity * elapsed;
+      const rotation = rotationSpeed * elapsed;
+      
+      // Fade out near the right edge
+      const screenWidth = window.innerWidth;
+      const fadeStart = screenWidth * 0.8;
+      const opacity = x > fadeStart ? 1 - ((x - fadeStart) / (screenWidth * 0.2)) : 1;
+      
+      particle.style.left = x + "px";
+      particle.style.transform = `translate(-50%, -50%) rotate(${rotation}deg)`;
+      particle.style.opacity = Math.max(0, opacity);
+      
+      requestAnimationFrame(animate);
+    }
+    
+    requestAnimationFrame(animate);
+          setTimeout(() => particle.remove(), duration);
+        }
+}
+
+function createReverseAnimation(content, isEmoji) {
+  const particleCount = 25;
+  const duration = 3000; // Animation duration in ms
+  
+  for (let i = 0; i < particleCount; i++) {
+    const particle = isEmoji ? document.createElement("div") : document.createElement("img");
+    
+    if (isEmoji) {
+      particle.textContent = content;
+  } else {
+      particle.src = content;
+    }
+    
+    // Random starting position on the right side, off-screen
+    const startX = window.innerWidth + 150;
+    const startY = Math.random() * window.innerHeight;
+    
+    // Random velocity (how fast they move left, negative)
+    const velocity = -(300 + Math.random() * 400); // pixels per second (negative for left movement)
+    
+    // Random size variation
+    const size = isEmoji ? (3 + Math.random() * 4) : (60 + Math.random() * 80);
+    
+    // Random rotation speed
+    const rotationSpeed = (Math.random() - 0.5) * 360;
+    
+    // Initial styles
+    const baseStyles = {
+      position: "fixed",
+      left: startX + "px",
+      top: startY + "px",
+      opacity: "1",
+      pointerEvents: "none",
+      zIndex: "999999",
+      transform: "translate(-50%, -50%)",
+      transition: "none"
+    };
+    
+    if (isEmoji) {
+      baseStyles.fontSize = size + "rem";
+    } else {
+      baseStyles.width = size + "px";
+      baseStyles.height = size + "px";
+    }
+    
+    Object.assign(particle.style, baseStyles);
+    document.body.appendChild(particle);
+    
+    // Animate particle moving right to left
+      const startTime = Date.now();
+      
+      function animate() {
+        const elapsed = (Date.now() - startTime) / 1000;
+        const progress = elapsed / (duration / 1000);
+        
+        if (progress >= 1) return;
+        
+      const x = startX + velocity * elapsed;
+        const rotation = rotationSpeed * elapsed;
+      
+      // Fade out near the left edge
+      const fadeStart = window.innerWidth * 0.2;
+      const opacity = x < fadeStart ? 1 - ((fadeStart - x) / (window.innerWidth * 0.2)) : 1;
+        
+        particle.style.left = x + "px";
+        particle.style.transform = `translate(-50%, -50%) rotate(${rotation}deg)`;
+      particle.style.opacity = Math.max(0, opacity);
+        
+        requestAnimationFrame(animate);
+      }
+      
+      requestAnimationFrame(animate);
+    setTimeout(() => particle.remove(), duration);
+  }
+    }
+    
+function createTornadoAnimation(content, isEmoji) {
+    const particleCount = 25;
+  const duration = 4000; // Animation duration in ms
+    const centerX = window.innerWidth / 2;
+    const centerY = window.innerHeight / 2;
+    
+    for (let i = 0; i < particleCount; i++) {
+    const particle = isEmoji ? document.createElement("div") : document.createElement("img");
+    
+    if (isEmoji) {
+      particle.textContent = content;
+    } else {
+      particle.src = content;
+    }
+    
+    // Each particle starts at a different angle
+    const startAngle = (i / particleCount) * Math.PI * 2;
+    
+    // Random size variation
+    const size = isEmoji ? (3 + Math.random() * 4) : (60 + Math.random() * 80);
+    
+    // Initial styles
+    const baseStyles = {
+        position: "fixed",
+        left: centerX + "px",
+        top: centerY + "px",
+        opacity: "1",
+        pointerEvents: "none",
+        zIndex: "999999",
+        transform: "translate(-50%, -50%)",
+        transition: "none"
+    };
+    
+    if (isEmoji) {
+      baseStyles.fontSize = size + "rem";
+    } else {
+      baseStyles.width = size + "px";
+      baseStyles.height = size + "px";
+    }
+    
+    Object.assign(particle.style, baseStyles);
+      document.body.appendChild(particle);
+    
+    // Animate in cyclone/tornado spiral pattern
+    const startTime = Date.now();
+    
+    function animate() {
+      const elapsed = (Date.now() - startTime) / 1000;
+      const progress = elapsed / (duration / 1000);
+      
+      if (progress >= 1) return;
+      
+      // Spiral outward while rotating
+      const angle = startAngle + elapsed * 3 * Math.PI; // 1.5 full rotations per second
+      const radius = progress * 300; // Spiral outward
+      
+      const x = centerX + Math.cos(angle) * radius;
+      const y = centerY + Math.sin(angle) * radius;
+      
+      // Particle spins on its own axis
+      const rotation = elapsed * 360;
+      
+      // Fade out as it spirals out
+      const opacity = 1 - progress * 0.8;
+      
+      particle.style.left = x + "px";
+      particle.style.top = y + "px";
+      particle.style.transform = `translate(-50%, -50%) rotate(${rotation}deg)`;
+      particle.style.opacity = Math.max(0, opacity);
+      
+      requestAnimationFrame(animate);
+    }
+    
+    requestAnimationFrame(animate);
+      setTimeout(() => particle.remove(), duration);
+    }
+}
+
+function createWaveAnimation(content, isEmoji) {
+  const particleCount = 25;
+  const duration = 4000; // Animation duration in ms
+  const waveHeight = window.innerHeight * 0.3; // Wave amplitude
+  const baseY = window.innerHeight / 2;
+  
+  for (let i = 0; i < particleCount; i++) {
+    const particle = isEmoji ? document.createElement("div") : document.createElement("img");
+    
+    if (isEmoji) {
+      particle.textContent = content;
+    } else {
+      particle.src = content;
+    }
+    
+    // Stagger the start positions across the left side
+    const delay = (i / particleCount) * 1000; // Stagger by up to 1 second
+    
+    // Random size variation
+    const size = isEmoji ? (3 + Math.random() * 3) : (60 + Math.random() * 60);
+    
+    // Random vertical offset within the wave
+    const verticalOffset = (Math.random() - 0.5) * 100;
+    
+    // Initial styles
+    const baseStyles = {
+      position: "fixed",
+      left: "-100px",
+      top: baseY + "px",
+      opacity: "0",
+      pointerEvents: "none",
+      zIndex: "999999",
+      transform: "translate(-50%, -50%)",
+      transition: "none"
+    };
+    
+    if (isEmoji) {
+      baseStyles.fontSize = size + "rem";
+    } else {
+      baseStyles.width = size + "px";
+      baseStyles.height = size + "px";
+    }
+    
+    Object.assign(particle.style, baseStyles);
+    document.body.appendChild(particle);
+    
+    // Animate wave motion
+    setTimeout(() => {
+      const startTime = Date.now();
+      
+      function animate() {
+        const elapsed = (Date.now() - startTime) / 1000;
+        const progress = elapsed / (duration / 1000);
+        
+        if (progress >= 1) return;
+        
+        // Move from left to right
+        const x = -100 + progress * (window.innerWidth + 200);
+        
+        // Wave motion (sine wave that "crests" and "crashes")
+        // Creates an ocean wave effect
+        const waveProgress = (x + 100) / window.innerWidth;
+        let waveY;
+        
+        if (waveProgress < 0.3) {
+          // Building wave
+          waveY = Math.sin(waveProgress * Math.PI * 5) * waveHeight * (waveProgress / 0.3);
+        } else if (waveProgress < 0.7) {
+          // Cresting wave
+          waveY = Math.sin(waveProgress * Math.PI * 3) * waveHeight;
+        } else {
+          // Crashing wave
+          waveY = Math.sin(waveProgress * Math.PI * 5) * waveHeight * (1 - (waveProgress - 0.7) / 0.3);
+        }
+        
+        const y = baseY + waveY + verticalOffset;
+        
+        // Rotation based on wave direction
+        const rotation = Math.sin(waveProgress * Math.PI * 3) * 30;
+        
+        // Fade in at start, fade out at end
+        let opacity = 1;
+        if (progress < 0.1) {
+          opacity = progress / 0.1;
+        } else if (progress > 0.9) {
+          opacity = 1 - ((progress - 0.9) / 0.1);
+        }
+        
+        particle.style.left = x + "px";
+        particle.style.top = y + "px";
+        particle.style.transform = `translate(-50%, -50%) rotate(${rotation}deg)`;
+        particle.style.opacity = opacity;
+        
+        requestAnimationFrame(animate);
+      }
+      
+      requestAnimationFrame(animate);
+    }, delay);
+    
+    setTimeout(() => particle.remove(), duration + delay);
+  }
+}
+
 function showImageOverlay(src, animationType = 'burst') {
-  if (animationType === 'drift') {
-    // Drift animation for images
+  if (animationType === 'boring' || animationType === 'boring-giant') {
+    // Boring animation - single image centered
+    const particle = document.createElement("img");
+    particle.src = src;
+    
+    const centerX = window.innerWidth / 2;
+    const centerY = window.innerHeight / 2;
+    const duration = 2500;
+    const size = animationType === 'boring-giant' ? 600 : 200;
+    
+    Object.assign(particle.style, {
+      position: "fixed",
+      left: centerX + "px",
+      top: centerY + "px",
+      width: size + "px",
+      height: size + "px",
+      opacity: "1",
+      pointerEvents: "none",
+      zIndex: "999999",
+      transform: "translate(-50%, -50%)",
+      transition: "none"
+    });
+    
+    document.body.appendChild(particle);
+    
+    const startTime = Date.now();
+    
+    function animate() {
+      const elapsed = (Date.now() - startTime) / 1000;
+      const progress = elapsed / (duration / 1000);
+      
+      if (progress >= 1) return;
+      
+      const opacity = progress > 0.7 ? (1 - (progress - 0.7) / 0.3) : 1;
+      particle.style.opacity = opacity;
+      
+      requestAnimationFrame(animate);
+    }
+    
+    requestAnimationFrame(animate);
+    setTimeout(() => particle.remove(), duration);
+    
+  } else if (animationType === 'drive') {
+    // Drive animation - left to right
+    const particleCount = 25;
+    const duration = 3000;
+    
+    for (let i = 0; i < particleCount; i++) {
+      const particle = document.createElement("img");
+      particle.src = src;
+      
+      const startX = -150;
+      const startY = Math.random() * window.innerHeight;
+      const velocity = 300 + Math.random() * 400;
+      const rotationSpeed = (Math.random() - 0.5) * 360;
+      const size = 60 + Math.random() * 80;
+      
+      Object.assign(particle.style, {
+        position: "fixed",
+        left: startX + "px",
+        top: startY + "px",
+        width: size + "px",
+        height: size + "px",
+        opacity: "1",
+        pointerEvents: "none",
+        zIndex: "999999",
+        transform: "translate(-50%, -50%)",
+        transition: "none"
+      });
+      
+      document.body.appendChild(particle);
+      
+      const startTime = Date.now();
+      
+      function animate() {
+        const elapsed = (Date.now() - startTime) / 1000;
+        const progress = elapsed / (duration / 1000);
+        
+        if (progress >= 1) return;
+        
+        const x = startX + velocity * elapsed;
+        const rotation = rotationSpeed * elapsed;
+        
+        const screenWidth = window.innerWidth;
+        const fadeStart = screenWidth * 0.8;
+        const opacity = x > fadeStart ? 1 - ((x - fadeStart) / (screenWidth * 0.2)) : 1;
+        
+        particle.style.left = x + "px";
+        particle.style.transform = `translate(-50%, -50%) rotate(${rotation}deg)`;
+        particle.style.opacity = Math.max(0, opacity);
+        
+        requestAnimationFrame(animate);
+      }
+      
+      requestAnimationFrame(animate);
+      setTimeout(() => particle.remove(), duration);
+    }
+    
+  } else if (animationType === 'reverse') {
+    // Reverse animation - right to left
+    const particleCount = 25;
+    const duration = 3000;
+    
+    for (let i = 0; i < particleCount; i++) {
+      const particle = document.createElement("img");
+      particle.src = src;
+      
+      const startX = window.innerWidth + 150;
+      const startY = Math.random() * window.innerHeight;
+      const velocity = -(300 + Math.random() * 400);
+      const rotationSpeed = (Math.random() - 0.5) * 360;
+      const size = 60 + Math.random() * 80;
+      
+      Object.assign(particle.style, {
+        position: "fixed",
+        left: startX + "px",
+        top: startY + "px",
+        width: size + "px",
+        height: size + "px",
+        opacity: "1",
+        pointerEvents: "none",
+        zIndex: "999999",
+        transform: "translate(-50%, -50%)",
+        transition: "none"
+      });
+      
+      document.body.appendChild(particle);
+      
+      const startTime = Date.now();
+      
+      function animate() {
+        const elapsed = (Date.now() - startTime) / 1000;
+        const progress = elapsed / (duration / 1000);
+        
+        if (progress >= 1) return;
+        
+        const x = startX + velocity * elapsed;
+        const rotation = rotationSpeed * elapsed;
+        
+        const fadeStart = window.innerWidth * 0.2;
+        const opacity = x < fadeStart ? 1 - ((fadeStart - x) / (window.innerWidth * 0.2)) : 1;
+        
+        particle.style.left = x + "px";
+        particle.style.transform = `translate(-50%, -50%) rotate(${rotation}deg)`;
+        particle.style.opacity = Math.max(0, opacity);
+        
+        requestAnimationFrame(animate);
+      }
+      
+      requestAnimationFrame(animate);
+      setTimeout(() => particle.remove(), duration);
+    }
+    
+  } else if (animationType === 'tornado') {
+    // Tornado animation - spiral cyclone
+    const particleCount = 25;
+    const duration = 4000;
+    const centerX = window.innerWidth / 2;
+    const centerY = window.innerHeight / 2;
+    
+    for (let i = 0; i < particleCount; i++) {
+      const particle = document.createElement("img");
+      particle.src = src;
+      
+      const startAngle = (i / particleCount) * Math.PI * 2;
+      const size = 60 + Math.random() * 80;
+      
+      Object.assign(particle.style, {
+        position: "fixed",
+        left: centerX + "px",
+        top: centerY + "px",
+        width: size + "px",
+        height: size + "px",
+        opacity: "1",
+        pointerEvents: "none",
+        zIndex: "999999",
+        transform: "translate(-50%, -50%)",
+        transition: "none"
+      });
+      
+      document.body.appendChild(particle);
+      
+      const startTime = Date.now();
+      
+      function animate() {
+        const elapsed = (Date.now() - startTime) / 1000;
+        const progress = elapsed / (duration / 1000);
+        
+        if (progress >= 1) return;
+        
+        const angle = startAngle + elapsed * 3 * Math.PI;
+        const radius = progress * 300;
+        
+        const x = centerX + Math.cos(angle) * radius;
+        const y = centerY + Math.sin(angle) * radius;
+        const rotation = elapsed * 360;
+        const opacity = 1 - progress * 0.8;
+        
+        particle.style.left = x + "px";
+        particle.style.top = y + "px";
+        particle.style.transform = `translate(-50%, -50%) rotate(${rotation}deg)`;
+        particle.style.opacity = Math.max(0, opacity);
+        
+        requestAnimationFrame(animate);
+      }
+      
+      requestAnimationFrame(animate);
+      setTimeout(() => particle.remove(), duration);
+    }
+    
+  } else if (animationType === 'wave') {
+    // Wave animation - ocean wave
+    const particleCount = 25;
+    const duration = 4000;
+    const waveHeight = window.innerHeight * 0.3;
+    const baseY = window.innerHeight / 2;
+    
+    for (let i = 0; i < particleCount; i++) {
+      const particle = document.createElement("img");
+      particle.src = src;
+      
+      const delay = (i / particleCount) * 1000;
+      const size = 60 + Math.random() * 60;
+      const verticalOffset = (Math.random() - 0.5) * 100;
+      
+      Object.assign(particle.style, {
+        position: "fixed",
+        left: "-100px",
+        top: baseY + "px",
+        width: size + "px",
+        height: size + "px",
+        opacity: "0",
+        pointerEvents: "none",
+        zIndex: "999999",
+        transform: "translate(-50%, -50%)",
+        transition: "none"
+      });
+      
+      document.body.appendChild(particle);
+      
+      setTimeout(() => {
+        const startTime = Date.now();
+        
+        function animate() {
+          const elapsed = (Date.now() - startTime) / 1000;
+          const progress = elapsed / (duration / 1000);
+          
+          if (progress >= 1) return;
+          
+          const x = -100 + progress * (window.innerWidth + 200);
+          const waveProgress = (x + 100) / window.innerWidth;
+          let waveY;
+          
+          if (waveProgress < 0.3) {
+            waveY = Math.sin(waveProgress * Math.PI * 5) * waveHeight * (waveProgress / 0.3);
+          } else if (waveProgress < 0.7) {
+            waveY = Math.sin(waveProgress * Math.PI * 3) * waveHeight;
+          } else {
+            waveY = Math.sin(waveProgress * Math.PI * 5) * waveHeight * (1 - (waveProgress - 0.7) / 0.3);
+          }
+          
+          const y = baseY + waveY + verticalOffset;
+          const rotation = Math.sin(waveProgress * Math.PI * 3) * 30;
+          
+          let opacity = 1;
+          if (progress < 0.1) {
+            opacity = progress / 0.1;
+          } else if (progress > 0.9) {
+            opacity = 1 - ((progress - 0.9) / 0.1);
+          }
+          
+          particle.style.left = x + "px";
+          particle.style.top = y + "px";
+          particle.style.transform = `translate(-50%, -50%) rotate(${rotation}deg)`;
+          particle.style.opacity = opacity;
+          
+          requestAnimationFrame(animate);
+        }
+        
+        requestAnimationFrame(animate);
+      }, delay);
+      
+      setTimeout(() => particle.remove(), duration + delay);
+    }
+    
+  } else if (animationType === 'rain') {
+    // Rain animation
     const waveCount = 4;
     const particlesPerWave = 7;
     const waveInterval = 300;
     const duration = 3500;
     
-    function animateDriftParticle(particle, startX, duration) {
+    function animateRainParticle(particle, startX, duration) {
       const startTime = Date.now();
       const gravity = 500;
       const startY = -100;
@@ -811,13 +1767,14 @@ function showImageOverlay(src, animationType = 'burst') {
           });
           
           document.body.appendChild(particle);
-          animateDriftParticle(particle, startX, duration);
+          animateRainParticle(particle, startX, duration);
           setTimeout(() => particle.remove(), duration);
         }
       }, wave * waveInterval);
     }
+    
   } else {
-    // Burst animation for images
+    // Burst animation (default)
     function animateParticle(particle, velocityX, velocityY, rotationSpeed, duration) {
       const startTime = Date.now();
       const gravity = 500;
