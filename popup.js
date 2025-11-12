@@ -334,12 +334,20 @@ let currentObjectURLs = [];
 // Render custom images in the popup
 function renderCustomImages(customImages) {
   const container = document.getElementById('customImagesContainer');
+  const label = document.getElementById('userAddedLabel');
   
   // Revoke previous object URLs to prevent memory leaks
   currentObjectURLs.forEach(url => URL.revokeObjectURL(url));
   currentObjectURLs = [];
   
   container.innerHTML = ''; // Clear existing content
+  
+  // Show/hide the "User added" label based on whether we have custom images
+  if (customImages.length > 0) {
+    label.style.display = 'block';
+  } else {
+    label.style.display = 'none';
+  }
   
   customImages.forEach(imageData => {
     try {

@@ -118,6 +118,11 @@
       padding: 0;
       font-size: 24px;
       display: inline-block;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
     
     .emoji-grid img {
@@ -126,6 +131,19 @@
       border-radius: 8px;
       cursor: pointer;
       display: block;
+    }
+    
+    /* Section labels */
+    .emoji-section-label {
+      width: 100%;
+      font-size: 11px;
+      font-weight: 600;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 8px;
+      margin-bottom: -4px;
+      padding-left: 2px;
     }
     
     #addCustomBtn {
@@ -461,8 +479,11 @@
             <img src="emojis/clap.png" alt="clap" />
           </button>
           
+          <!-- User added section label (will be shown/hidden by JS) -->
+          <div class="emoji-section-label" id="userAddedLabel" style="display: none;">User added</div>
+          
           <!-- Custom images will be inserted here dynamically -->
-          <div id="customImagesContainer"></div>
+          <div id="customImagesContainer" style="display: contents;"></div>
         </div>
       </div>
     </div>
