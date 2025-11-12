@@ -103,6 +103,28 @@
       margin-bottom: 5px;
     }
     
+    /* Search input styling */
+    .emoji-search {
+      width: 100%;
+      padding: 8px 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 13px;
+      box-sizing: border-box;
+      transition: border-color 0.2s;
+      margin-bottom: 10px;
+    }
+    
+    .emoji-search:focus {
+      outline: none;
+      border-color: #4CAF50;
+    }
+    
+    .emoji-search::placeholder {
+      color: #999;
+    }
+    
     /* Emoji grid in submenu */
     .emoji-grid {
       display: flex;
@@ -298,6 +320,7 @@
     }
     
     .modal-step input[type="password"],
+    .modal-step input[type="text"],
     .modal-step textarea {
       width: 100%;
       padding: 12px;
@@ -311,6 +334,7 @@
     }
     
     .modal-step input[type="password"]:focus,
+    .modal-step input[type="text"]:focus,
     .modal-step textarea:focus {
       outline: none;
       border-color: #4CAF50;
@@ -437,6 +461,11 @@
       
       <!-- Emojis submenu -->
       <div class="submenu" id="emojisSubmenu">
+        <!-- Search input -->
+        <div style="padding: 10px 10px 0 10px;">
+          <input type="text" class="emoji-search" id="emojiSearch" placeholder="Search emojis..." />
+        </div>
+        
         <!-- Control buttons section -->
         <div class="emoji-controls">
           <button id="addCustomBtn" title="Add custom emoji">+</button>
@@ -450,33 +479,33 @@
           <button data-type="emoji" data-value="🔥">🔥</button>
           <button data-type="emoji" data-value="❤️">❤️</button>
 
-          <!-- Custom emoji images -->
-          <button data-type="image" data-src="emojis/heart.png">
-            <img src="emojis/heart.png" alt="heart" />
+          <!-- Custom emoji images (alphabetically sorted) -->
+          <button data-type="image" data-src="emojis/clap.png">
+            <img src="emojis/clap.png" alt="clap" />
           </button>
-          <button data-type="image" data-src="emojis/party.png">
-            <img src="emojis/party.png" alt="party" />
+          <button data-type="image" data-src="emojis/cookin.png">
+            <img src="emojis/cookin.png" alt="cookin" />
           </button>
           <button data-type="image" data-src="emojis/fire.png">
             <img src="emojis/fire.png" alt="fire" />
           </button>
+          <button data-type="image" data-src="emojis/heart.png">
+            <img src="emojis/heart.png" alt="heart" />
+          </button>
           <button data-type="image" data-src="emojis/letsgo.png">
-            <img src="emojis/letsgo.png" alt="let's go" />
+            <img src="emojis/letsgo.png" alt="letsgo" />
+          </button>
+          <button data-type="image" data-src="emojis/money.png">
+            <img src="emojis/money.png" alt="money" />
+          </button>
+          <button data-type="image" data-src="emojis/party.png">
+            <img src="emojis/party.png" alt="party" />
           </button>
           <button data-type="image" data-src="emojis/rocket.png">
             <img src="emojis/rocket.png" alt="rocket" />
           </button>
           <button data-type="image" data-src="emojis/thumbsup.png">
-            <img src="emojis/thumbsup.png" alt="thumbs up" />
-          </button>
-          <button data-type="image" data-src="emojis/cookin.png">
-            <img src="emojis/cookin.png" alt="cookin" />
-          </button>
-          <button data-type="image" data-src="emojis/money.png">
-            <img src="emojis/money.png" alt="money" />
-          </button>
-          <button data-type="image" data-src="emojis/clap.png">
-            <img src="emojis/clap.png" alt="clap" />
+            <img src="emojis/thumbsup.png" alt="thumbsup" />
           </button>
           
           <!-- User added section label (will be shown/hidden by JS) -->
@@ -513,9 +542,9 @@
           <span>Drive</span>
           <span class="checkmark" id="checkmark-drive">✓</span>
         </div>
-        <div class="submenu-item" data-animation="rain">
-          <span>Rain</span>
-          <span class="checkmark" id="checkmark-rain">✓</span>
+        <div class="submenu-item" data-animation="drift">
+          <span>Drift</span>
+          <span class="checkmark" id="checkmark-drift">✓</span>
         </div>
         <div class="submenu-item" data-animation="reverse">
           <span>Reverse</span>
@@ -526,7 +555,7 @@
           <span class="checkmark" id="checkmark-tornado">✓</span>
         </div>
         <div class="submenu-item" data-animation="wave">
-          <span>Wave</span>
+          <span>Waves</span>
           <span class="checkmark" id="checkmark-wave">✓</span>
         </div>
       </div>
@@ -568,10 +597,23 @@
         </div>
       </div>
 
-      <!-- Step 3: Prompt Input -->
+      <!-- Step 3: Name Input (for uploads) -->
+      <div id="nameInput" class="modal-step" style="display: none;">
+        <h3>Name Your Emoji</h3>
+        <p class="modal-info">Give your emoji a name to make it easier to search for later.</p>
+        <input type="text" id="nameField" placeholder="e.g., happy face, thumbs up" />
+        <div id="nameModalMessage" class="modal-message"></div>
+        <div class="modal-buttons">
+          <button class="btn-secondary" id="nameBack">Back</button>
+          <button class="btn-primary" id="nameSubmit">Save</button>
+        </div>
+      </div>
+
+      <!-- Step 4: Prompt Input (for AI generation) -->
       <div id="promptInput" class="modal-step" style="display: none;">
-        <h3>Describe Your Emoji</h3>
-        <textarea id="promptField" placeholder="e.g., a smiling avocado wearing sunglasses" rows="4"></textarea>
+        <h3>Generate Your Emoji</h3>
+        <input type="text" id="aiNameField" placeholder="Name (e.g., happy cat)" style="margin-bottom: 12px;" />
+        <textarea id="promptField" placeholder="Describe the emoji: e.g., a smiling avocado wearing sunglasses" rows="4"></textarea>
         <div id="modalMessage" class="modal-message"></div>
         <div class="modal-buttons">
           <button class="btn-secondary" id="promptBack">Back</button>

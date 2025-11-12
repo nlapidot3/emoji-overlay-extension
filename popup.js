@@ -1,3 +1,6 @@
+// Global variable to temporarily store the selected file for naming
+let pendingFile = null;
+
 // Initialize on popup load
 document.addEventListener('DOMContentLoaded', () => {
   loadCustomImages();
@@ -79,6 +82,12 @@ async function downloadImageAsBlob(url) {
 }
 
 function setupEventListeners() {
+  // Search input handler
+  const searchInput = document.getElementById('emojiSearch');
+  if (searchInput) {
+    searchInput.addEventListener('input', filterEmojis);
+  }
+  
   // Menu toggle handlers
   document.querySelectorAll('.menu-item-header').forEach(header => {
     header.addEventListener('click', (e) => {
@@ -182,6 +191,61 @@ function updateAnimationCheckmarks(selectedAnimation) {
   });
 }
 
+// Filter emojis based on search query
+function filterEmojis() {
+  const searchInput = document.getElementById('emojiSearch');
+  const query = searchInput.value.toLowerCase().trim();
+  
+  // Get all emoji buttons (both built-in and custom)
+  const emojiGrid = document.querySelector('.emoji-grid');
+  const allButtons = emojiGrid.querySelectorAll('button[data-type]');
+  
+  allButtons.forEach(button => {
+    if (query === '') {
+      // Show all if search is empty
+      button.style.display = '';
+      return;
+    }
+    
+    let searchText = '';
+    
+    if (button.dataset.type === 'emoji') {
+      // For Unicode emojis, we can't easily search them, so hide them during search
+      // Users can clear search to see them again
+      button.style.display = 'none';
+      return;
+    } else if (button.dataset.type === 'image') {
+      // For image emojis, check alt text or data-name attribute
+      const img = button.querySelector('img');
+      searchText = (img?.alt || button.dataset.name || '').toLowerCase();
+    }
+    
+    // Show/hide based on match
+    if (searchText.includes(query)) {
+      button.style.display = '';
+    } else {
+      button.style.display = 'none';
+    }
+  });
+  
+  // Also filter custom image wrappers
+  const customContainer = document.getElementById('customImagesContainer');
+  if (customContainer) {
+    const wrappers = customContainer.querySelectorAll('.custom-image-wrapper');
+    wrappers.forEach(wrapper => {
+      const button = wrapper.querySelector('button[data-type="image"]');
+      if (button) {
+        const name = button.dataset.name || '';
+        if (query === '' || name.toLowerCase().includes(query)) {
+          wrapper.style.display = '';
+        } else {
+          wrapper.style.display = 'none';
+        }
+      }
+    });
+  }
+}
+
 // Migrate existing data from chrome.storage.local to IndexedDB
 async function migrateFromChromeStorage() {
   try {
@@ -249,8 +313,8 @@ async function loadCustomImages() {
 }
 
 // Save custom image to storage
-async function saveCustomImage(blob, id) {
-  await saveImage(blob, id);
+async function saveCustomImage(blob, id, name = 'Custom Emoji') {
+  await saveImage(blob, id, name);
 }
 
 // Delete custom image from storage
@@ -288,11 +352,6 @@ async function handleFileSelect(event) {
   // Reset file input
   event.target.value = '';
   
-  await processImageFile(file);
-}
-
-// Process and save the selected image file
-async function processImageFile(file) {
   // Validate file type - accept PNG and GIF
   if (!file.type.match('image/(png|gif)')) {
     alert('Please select a PNG or GIF file.');
@@ -313,11 +372,19 @@ async function processImageFile(file) {
     }
   }
   
+  // Store file temporarily and show naming modal
+  pendingFile = file;
+  openModal();
+  showNameInputStep();
+}
+
+// Process and save the selected image file
+async function processImageFile(file, name) {
   // Store file as Blob directly (no base64 conversion needed)
   const imageId = `custom_${Date.now()}`;
   
   try {
-    await saveCustomImage(file, imageId);
+    await saveCustomImage(file, imageId, name);
     await loadCustomImages(); // Refresh the display
   } catch (error) {
     if (error.message.includes('quota')) {
@@ -368,10 +435,12 @@ function renderCustomImages(customImages) {
       const button = document.createElement('button');
       button.dataset.type = 'image';
       button.dataset.src = imageData.objectURL;
+      button.dataset.name = imageData.name || 'Custom Emoji';
+      button.title = imageData.name || 'Custom Emoji'; // Tooltip
       
       const img = document.createElement('img');
       img.src = imageData.objectURL;
-      img.alt = 'custom emoji';
+      img.alt = imageData.name || 'custom emoji';
       
       // Handle image load errors
       img.onerror = () => {
@@ -481,7 +550,6 @@ function showEmojiOverlay(emoji, animationType = 'burst') {
       const startX = -150;
       const startY = Math.random() * window.innerHeight;
       const velocity = 300 + Math.random() * 400;
-      const rotationSpeed = (Math.random() - 0.5) * 360;
       const size = 3 + Math.random() * 4;
       
       Object.assign(particle.style, {
@@ -507,14 +575,13 @@ function showEmojiOverlay(emoji, animationType = 'burst') {
         if (progress >= 1) return;
         
         const x = startX + velocity * elapsed;
-        const rotation = rotationSpeed * elapsed;
         
         const screenWidth = window.innerWidth;
         const fadeStart = screenWidth * 0.8;
         const opacity = x > fadeStart ? 1 - ((x - fadeStart) / (screenWidth * 0.2)) : 1;
         
         particle.style.left = x + "px";
-        particle.style.transform = `translate(-50%, -50%) rotate(${rotation}deg)`;
+        particle.style.transform = `translate(-50%, -50%)`;
         particle.style.opacity = Math.max(0, opacity);
         
         requestAnimationFrame(animate);
@@ -536,7 +603,6 @@ function showEmojiOverlay(emoji, animationType = 'burst') {
       const startX = window.innerWidth + 150;
       const startY = Math.random() * window.innerHeight;
       const velocity = -(300 + Math.random() * 400);
-      const rotationSpeed = (Math.random() - 0.5) * 360;
       const size = 3 + Math.random() * 4;
       
       Object.assign(particle.style, {
@@ -562,13 +628,12 @@ function showEmojiOverlay(emoji, animationType = 'burst') {
         if (progress >= 1) return;
         
         const x = startX + velocity * elapsed;
-        const rotation = rotationSpeed * elapsed;
         
         const fadeStart = window.innerWidth * 0.2;
         const opacity = x < fadeStart ? 1 - ((fadeStart - x) / (window.innerWidth * 0.2)) : 1;
         
         particle.style.left = x + "px";
-        particle.style.transform = `translate(-50%, -50%) rotate(${rotation}deg)`;
+        particle.style.transform = `translate(-50%, -50%)`;
         particle.style.opacity = Math.max(0, opacity);
         
         requestAnimationFrame(animate);
@@ -708,8 +773,8 @@ function showEmojiOverlay(emoji, animationType = 'burst') {
       setTimeout(() => particle.remove(), duration + delay);
     }
     
-  } else if (animationType === 'rain') {
-    // Rain animation
+  } else if (animationType === 'drift') {
+    // Drift animation
     const waveCount = 4;
     const particlesPerWave = 7;
     const waveInterval = 300;
@@ -1114,9 +1179,6 @@ function createDriveAnimation(content, isEmoji) {
     // Random size variation
     const size = isEmoji ? (3 + Math.random() * 4) : (60 + Math.random() * 80);
     
-    // Random rotation speed
-    const rotationSpeed = (Math.random() - 0.5) * 360;
-    
     // Initial styles
     const baseStyles = {
             position: "fixed",
@@ -1149,7 +1211,6 @@ function createDriveAnimation(content, isEmoji) {
       if (progress >= 1) return;
       
       const x = startX + velocity * elapsed;
-      const rotation = rotationSpeed * elapsed;
       
       // Fade out near the right edge
       const screenWidth = window.innerWidth;
@@ -1157,7 +1218,7 @@ function createDriveAnimation(content, isEmoji) {
       const opacity = x > fadeStart ? 1 - ((x - fadeStart) / (screenWidth * 0.2)) : 1;
       
       particle.style.left = x + "px";
-      particle.style.transform = `translate(-50%, -50%) rotate(${rotation}deg)`;
+      particle.style.transform = `translate(-50%, -50%)`;
       particle.style.opacity = Math.max(0, opacity);
       
       requestAnimationFrame(animate);
@@ -1191,9 +1252,6 @@ function createReverseAnimation(content, isEmoji) {
     // Random size variation
     const size = isEmoji ? (3 + Math.random() * 4) : (60 + Math.random() * 80);
     
-    // Random rotation speed
-    const rotationSpeed = (Math.random() - 0.5) * 360;
-    
     // Initial styles
     const baseStyles = {
       position: "fixed",
@@ -1226,14 +1284,13 @@ function createReverseAnimation(content, isEmoji) {
         if (progress >= 1) return;
         
       const x = startX + velocity * elapsed;
-        const rotation = rotationSpeed * elapsed;
       
       // Fade out near the left edge
       const fadeStart = window.innerWidth * 0.2;
       const opacity = x < fadeStart ? 1 - ((fadeStart - x) / (window.innerWidth * 0.2)) : 1;
         
         particle.style.left = x + "px";
-        particle.style.transform = `translate(-50%, -50%) rotate(${rotation}deg)`;
+        particle.style.transform = `translate(-50%, -50%)`;
       particle.style.opacity = Math.max(0, opacity);
         
         requestAnimationFrame(animate);
@@ -1480,7 +1537,6 @@ function showImageOverlay(src, animationType = 'burst') {
       const startX = -150;
       const startY = Math.random() * window.innerHeight;
       const velocity = 300 + Math.random() * 400;
-      const rotationSpeed = (Math.random() - 0.5) * 360;
       const size = 60 + Math.random() * 80;
       
       Object.assign(particle.style, {
@@ -1507,14 +1563,13 @@ function showImageOverlay(src, animationType = 'burst') {
         if (progress >= 1) return;
         
         const x = startX + velocity * elapsed;
-        const rotation = rotationSpeed * elapsed;
         
         const screenWidth = window.innerWidth;
         const fadeStart = screenWidth * 0.8;
         const opacity = x > fadeStart ? 1 - ((x - fadeStart) / (screenWidth * 0.2)) : 1;
         
         particle.style.left = x + "px";
-        particle.style.transform = `translate(-50%, -50%) rotate(${rotation}deg)`;
+        particle.style.transform = `translate(-50%, -50%)`;
         particle.style.opacity = Math.max(0, opacity);
         
         requestAnimationFrame(animate);
@@ -1536,7 +1591,6 @@ function showImageOverlay(src, animationType = 'burst') {
       const startX = window.innerWidth + 150;
       const startY = Math.random() * window.innerHeight;
       const velocity = -(300 + Math.random() * 400);
-      const rotationSpeed = (Math.random() - 0.5) * 360;
       const size = 60 + Math.random() * 80;
       
       Object.assign(particle.style, {
@@ -1563,13 +1617,12 @@ function showImageOverlay(src, animationType = 'burst') {
         if (progress >= 1) return;
         
         const x = startX + velocity * elapsed;
-        const rotation = rotationSpeed * elapsed;
         
         const fadeStart = window.innerWidth * 0.2;
         const opacity = x < fadeStart ? 1 - ((fadeStart - x) / (window.innerWidth * 0.2)) : 1;
         
         particle.style.left = x + "px";
-        particle.style.transform = `translate(-50%, -50%) rotate(${rotation}deg)`;
+        particle.style.transform = `translate(-50%, -50%)`;
         particle.style.opacity = Math.max(0, opacity);
         
         requestAnimationFrame(animate);
@@ -1711,8 +1764,8 @@ function showImageOverlay(src, animationType = 'burst') {
       setTimeout(() => particle.remove(), duration + delay);
     }
     
-  } else if (animationType === 'rain') {
-    // Rain animation
+  } else if (animationType === 'drift') {
+    // Drift animation
     const waveCount = 4;
     const particlesPerWave = 7;
     const waveInterval = 300;
@@ -1865,6 +1918,13 @@ function setupModalListeners() {
   document.getElementById('apiKeyBack').addEventListener('click', showModalStep1);
   document.getElementById('apiKeySubmit').addEventListener('click', handleApiKeySubmit);
 
+  // Name input navigation (for uploads)
+  document.getElementById('nameBack').addEventListener('click', () => {
+    closeModal();
+    pendingFile = null;
+  });
+  document.getElementById('nameSubmit').addEventListener('click', handleNameSubmit);
+
   // Prompt navigation
   document.getElementById('promptBack').addEventListener('click', async () => {
     const apiKey = await getApiKey();
@@ -1889,6 +1949,12 @@ function setupModalListeners() {
     }
   });
 
+  document.getElementById('nameField').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      handleNameSubmit();
+    }
+  });
+
   // Close modal on overlay click
   document.getElementById('aiModal').addEventListener('click', (e) => {
     if (e.target.id === 'aiModal') {
@@ -1905,9 +1971,13 @@ function openModal() {
 function closeModal() {
   document.getElementById('aiModal').style.display = 'none';
   clearModalMessage();
+  clearNameModalMessage();
   // Clear inputs
   document.getElementById('apiKeyField').value = '';
   document.getElementById('promptField').value = '';
+  document.getElementById('nameField').value = '';
+  document.getElementById('aiNameField').value = '';
+  pendingFile = null;
 }
 
 function showModalStep1() {
@@ -1938,8 +2008,48 @@ function showLoadingState() {
 function hideAllModalSteps() {
   document.getElementById('optionSelect').style.display = 'none';
   document.getElementById('apiKeyInput').style.display = 'none';
+  document.getElementById('nameInput').style.display = 'none';
   document.getElementById('promptInput').style.display = 'none';
   document.getElementById('loadingState').style.display = 'none';
+}
+
+function showNameInputStep() {
+  hideAllModalSteps();
+  document.getElementById('nameInput').style.display = 'block';
+  document.getElementById('nameField').focus();
+  clearNameModalMessage();
+}
+
+async function handleNameSubmit() {
+  const nameField = document.getElementById('nameField');
+  const name = nameField.value.trim() || 'Custom Emoji';
+
+  if (!pendingFile) {
+    showNameModalError('No file selected');
+    return;
+  }
+
+  try {
+    await processImageFile(pendingFile, name);
+    closeModal();
+    pendingFile = null;
+  } catch (error) {
+    showNameModalError('Error saving emoji: ' + error.message);
+  }
+}
+
+function showNameModalError(message) {
+  const messageDiv = document.getElementById('nameModalMessage');
+  messageDiv.textContent = message;
+  messageDiv.className = 'modal-message error';
+}
+
+function clearNameModalMessage() {
+  const messageDiv = document.getElementById('nameModalMessage');
+  if (messageDiv) {
+    messageDiv.textContent = '';
+    messageDiv.className = 'modal-message';
+  }
 }
 
 async function handleAIOptionClick() {
@@ -1966,7 +2076,9 @@ async function handleApiKeySubmit() {
 
 async function handleGenerateEmoji() {
   const promptField = document.getElementById('promptField');
+  const aiNameField = document.getElementById('aiNameField');
   const prompt = promptField.value.trim();
+  const name = aiNameField.value.trim() || 'AI Generated';
 
   if (!prompt) {
     showModalError('Please describe the emoji you want to generate');
@@ -1990,9 +2102,9 @@ async function handleGenerateEmoji() {
     // Download as blob
     const blob = await downloadImageAsBlob(imageUrl);
 
-    // Save to IndexedDB
+    // Save to IndexedDB with custom name
     const imageId = `ai_generated_${Date.now()}`;
-    await saveCustomImage(blob, imageId);
+    await saveCustomImage(blob, imageId, name);
 
     // Refresh display
     await loadCustomImages();
