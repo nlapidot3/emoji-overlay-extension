@@ -109,35 +109,81 @@ function updateAnimationCheckmarks(selectedAnimation) {
   });
 }
 
+// Migrate existing data from chrome.storage.local to IndexedDB
+async function migrateFromChromeStorage() {
+  try {
+    // Check if migration has already been done
+    const migrationStatus = await chrome.storage.local.get('migrationComplete');
+    if (migrationStatus.migrationComplete) {
+      return; // Already migrated
+    }
+    
+    // Check for old data
+    const data = await chrome.storage.local.get('customImages');
+    const oldCustomImages = data.customImages || [];
+    
+    if (oldCustomImages.length === 0) {
+      // No data to migrate, mark as complete
+      await chrome.storage.local.set({ migrationComplete: true });
+      return;
+    }
+    
+    console.log(`Migrating ${oldCustomImages.length} images from chrome.storage to IndexedDB...`);
+    
+    // Migrate each image
+    let successCount = 0;
+    for (const imageData of oldCustomImages) {
+      try {
+        // Convert base64 data URL to Blob
+        if (imageData.dataUrl && imageData.dataUrl.startsWith('data:image/')) {
+          const response = await fetch(imageData.dataUrl);
+          const blob = await response.blob();
+          
+          // Save to IndexedDB
+          await saveImage(blob, imageData.id);
+          successCount++;
+        }
+      } catch (error) {
+        console.error(`Failed to migrate image ${imageData.id}:`, error);
+      }
+    }
+    
+    console.log(`Successfully migrated ${successCount} of ${oldCustomImages.length} images`);
+    
+    // Clear old data and mark migration complete
+    await chrome.storage.local.remove('customImages');
+    await chrome.storage.local.set({ migrationComplete: true });
+    
+  } catch (error) {
+    console.error('Error during migration:', error);
+    // Don't throw - allow app to continue functioning
+  }
+}
+
 // Load custom images from storage
 async function loadCustomImages() {
   try {
-    const data = await chrome.storage.local.get('customImages');
-    const customImages = data.customImages || [];
+    // Check for migration from chrome.storage.local to IndexedDB
+    await migrateFromChromeStorage();
+    
+    // Load images from IndexedDB
+    const customImages = await getAllImages();
     renderCustomImages(customImages);
   } catch (error) {
     console.error('Error loading custom images:', error);
-    // Clear corrupted data and retry
-    await chrome.storage.local.remove('customImages');
     renderCustomImages([]);
   }
 }
 
 // Save custom image to storage
-async function saveCustomImage(imageData) {
-  const data = await chrome.storage.local.get('customImages');
-  const customImages = data.customImages || [];
-  customImages.push(imageData);
-  await chrome.storage.local.set({ customImages });
+async function saveCustomImage(blob, id) {
+  await saveImage(blob, id);
 }
 
 // Delete custom image from storage
 async function deleteCustomImage(imageId) {
-  const data = await chrome.storage.local.get('customImages');
-  let customImages = data.customImages || [];
-  customImages = customImages.filter(img => img.id !== imageId);
-  await chrome.storage.local.set({ customImages });
-  renderCustomImages(customImages);
+  await deleteImage(imageId);
+  await loadCustomImages(); // Refresh the display
 }
 
 // Handle add custom image button click
@@ -147,8 +193,7 @@ function handleAddCustomImage() {
 
 // Handle clear custom images button click
 async function handleClearCustomImages() {
-  const data = await chrome.storage.local.get('customImages');
-  const customImages = data.customImages || [];
+  const customImages = await getAllImages();
   
   if (customImages.length === 0) {
     alert('No custom emojis to clear.');
@@ -156,7 +201,7 @@ async function handleClearCustomImages() {
   }
   
   if (confirm(`Delete all ${customImages.length} custom emoji(s)?`)) {
-    await chrome.storage.local.remove('customImages');
+    await clearAllImages();
     renderCustomImages([]);
     console.log('Custom images cleared successfully');
   }
@@ -175,74 +220,64 @@ async function handleFileSelect(event) {
 
 // Process and save the selected image file
 async function processImageFile(file) {
-  // Validate file type
-  if (!file.type.match('image/png')) {
-    alert('Please select a PNG file.');
+  // Validate file type - accept PNG and GIF
+  if (!file.type.match('image/(png|gif)')) {
+    alert('Please select a PNG or GIF file.');
     return;
   }
   
-  // Check file size (500KB limit for chrome.storage.local)
-  const maxSize = 500 * 1024; // 500KB in bytes
+  // Check file size (10MB limit for IndexedDB - practical for GIFs)
+  const maxSize = 10 * 1024 * 1024; // 10MB in bytes
   if (file.size > maxSize) {
-    alert('File is too large. Please select a PNG smaller than 500KB.');
+    alert('File is too large. Please select a file smaller than 10MB.');
     return;
   }
   
-  // Warn if file is large
-  if (file.size > 200 * 1024) {
-    if (!confirm('This file is quite large (>200KB). It may use significant storage space. Continue?')) {
+  // Warn if file is very large
+  if (file.size > 5 * 1024 * 1024) {
+    if (!confirm('This file is quite large (>5MB). Continue?')) {
       return;
     }
   }
   
-  // Read file and convert to data URL
-  const reader = new FileReader();
-  reader.onload = async (e) => {
-    const dataUrl = e.target.result;
-    
-    // Create image data object
-    const imageData = {
-      id: `custom_${Date.now()}`,
-      dataUrl: dataUrl
-    };
-    
-    try {
-      await saveCustomImage(imageData);
-      await loadCustomImages(); // Refresh the display
-    } catch (error) {
-      if (error.message.includes('QUOTA')) {
-        alert('Storage quota exceeded. Please delete some custom images first.');
-      } else {
-        alert('Error saving image: ' + error.message);
-      }
+  // Store file as Blob directly (no base64 conversion needed)
+  const imageId = `custom_${Date.now()}`;
+  
+  try {
+    await saveCustomImage(file, imageId);
+    await loadCustomImages(); // Refresh the display
+  } catch (error) {
+    if (error.message.includes('quota')) {
+      alert('Storage quota exceeded. Please delete some custom images first.');
+    } else {
+      alert('Error saving image: ' + error.message);
     }
-  };
-  
-  reader.onerror = () => {
-    alert('Error reading file.');
-  };
-  
-  reader.readAsDataURL(file);
+  }
 }
+
+// Keep track of object URLs for cleanup
+let currentObjectURLs = [];
 
 // Render custom images in the popup
 function renderCustomImages(customImages) {
   const container = document.getElementById('customImagesContainer');
+  
+  // Revoke previous object URLs to prevent memory leaks
+  currentObjectURLs.forEach(url => URL.revokeObjectURL(url));
+  currentObjectURLs = [];
+  
   container.innerHTML = ''; // Clear existing content
   
   customImages.forEach(imageData => {
     try {
       // Validate image data
-      if (!imageData.id || !imageData.dataUrl) {
+      if (!imageData.id || !imageData.objectURL) {
         console.warn('Invalid image data, skipping:', imageData);
         return;
       }
       
-      // Validate data URL format
-      if (!imageData.dataUrl.startsWith('data:image/')) {
-        console.warn('Invalid data URL, skipping:', imageData.id);
-        return;
-      }
+      // Track object URL for cleanup
+      currentObjectURLs.push(imageData.objectURL);
       
       // Create wrapper for positioning delete button
       const wrapper = document.createElement('div');
@@ -251,10 +286,10 @@ function renderCustomImages(customImages) {
       // Create the image button
       const button = document.createElement('button');
       button.dataset.type = 'image';
-      button.dataset.src = imageData.dataUrl;
+      button.dataset.src = imageData.objectURL;
       
       const img = document.createElement('img');
-      img.src = imageData.dataUrl;
+      img.src = imageData.objectURL;
       img.alt = 'custom emoji';
       
       // Handle image load errors
@@ -289,17 +324,27 @@ function renderCustomImages(customImages) {
         const data = await chrome.storage.local.get('selectedAnimation');
         const animationType = data.selectedAnimation || 'burst';
         
-        chrome.scripting.executeScript({
-          target: { tabId: tab.id },
-          func: showImageOverlay,
-          args: [imageData.dataUrl, animationType]
-        });
+        // Convert blob to data URL for content script (object URLs don't work across contexts)
+        const reader = new FileReader();
+        reader.onload = () => {
+          chrome.scripting.executeScript({
+            target: { tabId: tab.id },
+            func: showImageOverlay,
+            args: [reader.result, animationType]
+          });
+        };
+        reader.readAsDataURL(imageData.blob);
       });
     } catch (error) {
       console.error('Error rendering custom image:', imageData.id, error);
     }
   });
 }
+
+// Clean up object URLs when popup closes
+window.addEventListener('unload', () => {
+  currentObjectURLs.forEach(url => URL.revokeObjectURL(url));
+});
 
 function showEmojiOverlay(emoji, animationType = 'burst') {
   if (animationType === 'rain') {

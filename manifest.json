@@ -9,7 +9,7 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["emojis/*.png"],
+      "resources": ["emojis/*.png", "emojis/*.gif"],
       "matches": ["<all_urls>"]
     }
   ]
